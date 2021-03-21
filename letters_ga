@@ -1,0 +1,189 @@
+import matplotlib.pyplot as plt 
+import random
+import string
+
+
+def get_random_character():
+  # farkli dillere ozgu karatterler veya noktalama isaretleri character_set'e eklenebilir
+  character_set = string.ascii_lowercase + ' '
+  return random.choice(character_set)
+
+
+def create_random_string(n):
+  rnd_str = ""
+
+  for i in range(0, n):
+    rnd_str += get_random_character()
+
+  return rnd_str
+
+
+# levenshtein benzerliğini hesapla
+def levenshtein(s1, s2):
+    if len(s1) < len(s2):
+        return levenshtein(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+
+    return previous_row[-1]
+
+
+def form_chromosome(genes, fitness_value):
+    return {"genes": genes, "fitness_value":fitness_value}
+
+
+def calculate_fitness_value(genes):
+  return levenshtein(target, genes)
+
+
+def calculate_avg_fitness_value(population):
+
+  total_fitness_value = 0
+  for chromosome in population:
+    total_fitness_value += chromosome["fitness_value"]
+
+  avg_fitness_value = total_fitness_value / len(population)  
+
+  return avg_fitness_value
+
+
+def mutation(chromosome):
+
+    genes = chromosome["genes"]
+    mutated_genes = ""
+
+    for i in range(0, len(genes)):
+      chr = ""
+      if i % 2 == 0:
+        mutated_genes += get_random_character()   
+      else:
+        mutated_genes += genes[i]
+
+    new_fitness_value = calculate_fitness_value(mutated_genes)
+
+    new_chromosome = form_chromosome(mutated_genes, new_fitness_value)
+
+    return new_chromosome
+
+
+def cross_over(chrom_01, chrom_02):
+
+    genes_01 = chrom_01["genes"]
+    genes_02 = chrom_02["genes"]
+
+    n = int(len(genes_01) / 3)    
+
+    new_genes_01 = ""
+    new_genes_02 = ""
+
+    rnd_indexes = random.sample(range(0, len(genes) -1 ), n)
+
+    for i in range(0, len(genes_01)):
+      if i in rnd_indexes:
+        new_genes_01 += genes_02[i]
+        new_genes_02 += genes_01[i]
+      else:
+        new_genes_01 += genes_01[i]
+        new_genes_02 += genes_02[i]
+        
+    fitness_value_01 = calculate_fitness_value(new_genes_01)
+    fitness_value_02 = calculate_fitness_value(new_genes_02)
+
+    new_chromosome_01 = form_chromosome(new_genes_01, fitness_value_01)
+    new_chromosome_02 = form_chromosome(new_genes_02, fitness_value_02)
+
+    return new_chromosome_01, new_chromosome_02
+
+
+number_of_iterations = 100000
+target = "genetic algorithm is actually pretty cool"
+population_size = 500
+population = []
+
+# populasyonu olustur
+for i in range(0, population_size):
+  genes = create_random_string(len(target))
+  fitness_value = calculate_fitness_value(genes)
+
+  chromosome = form_chromosome(genes, fitness_value)
+  population.append(chromosome)
+
+population = sorted(population, key=lambda k: k['fitness_value'], reverse=False)         
+
+min_fitness_list = []
+avg_fitness_list = []
+max_fitness_list = []
+
+step_list = []
+fitness_list = []
+
+for i in range(0, number_of_iterations):
+    
+    cross_over_indexes = random.sample(range(0, population_size), 2)
+    mutation_index = random.sample(range(0, population_size), 1)[0]
+    
+    new_chromosome_01, new_chromosome_02 = cross_over(population[cross_over_indexes[0]], population[cross_over_indexes[1]])
+    new_chromosome_03 = mutation(population[mutation_index])
+    
+    population.append(new_chromosome_01)
+    population.append(new_chromosome_02)
+    population.append(new_chromosome_03)
+    
+    population = sorted(population, key=lambda k: k['fitness_value'], reverse=False)         
+    
+    # en zayif 3 tanesi elendi
+    population = population[:population_size]
+
+    min_fitness_value = population[0]["fitness_value"] 
+    min_fitness_list.append(min_fitness_value)
+    avg_fitness_list.append(calculate_avg_fitness_value(population))
+    max_fitness_list.append(population[population_size - 1]["fitness_value"])
+
+    print(i, population[0])
+
+    if population[0]["fitness_value"] not in fitness_list:
+       step_list.append(str(i) + " - " + population[0]["genes"])
+       fitness_list.append(population[0]["fitness_value"])
+
+    if (min_fitness_value == 0):
+        break
+
+
+print(str(i+1) + ". min fitness : " + str(min_fitness_value))
+print(population[0])
+print("--")
+
+plt.plot(min_fitness_list, label = "En Küçük")    
+plt.plot(avg_fitness_list, label = "Ortalama")    
+plt.plot(max_fitness_list, label="En Büyük")    
+plt.xlabel("İterasyon Sayısı")
+plt.ylabel("Uygunluk Değeri")
+plt.title('Çaprazlama ve Mutasyon')
+
+plt.legend()
+plt.show()
+
+
+# kromozomlarda hedefe ne kadar yaklasildigi
+for i, step in enumerate(step_list, start=0):
+  it_number = step.split(" - ")[0]
+  gene = step.split(" - ")[1]
+  fitness = fitness_list[i]
+
+  for j, g in enumerate(gene, start=0):
+    if(target[j] == g):
+      print(colored(g, 'green'), end = "")  
+    else:
+      print(g, end = "")  
+
+  print(" - " + "iteration: " + str(int(it_number) + 1) + " - " + "fitness: " + str(fitness))
