@@ -14,7 +14,7 @@ def image_to_chromosome(image):
     return numpy.reshape(image, img_shape[0] * img_shape[1] * img_shape[2])
 
 
-def calculate_fitness(solution, solution_idx):
+def calculate_fitness(solution):
     fitness = numpy.sum(numpy.abs(target_chromosome - solution))
     fitness = numpy.sum(target_chromosome) - fitness
     return fitness
