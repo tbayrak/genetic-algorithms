@@ -15,7 +15,6 @@ def calculate_fitness_value(value):
 
 
 def calculate_avg_fitness_value(population):
-
   total_fitness_value = 0
   for chromosome in population:
     total_fitness_value += chromosome["fitness_value"]
@@ -24,21 +23,19 @@ def calculate_avg_fitness_value(population):
 
   return avg_fitness_value
 
-
+# mutate 3 genes
 def mutation(chromosome):
     new_genes = chromosome["genes"].copy()
     mutated_genes = random.sample(range(1, 100), 3)
     new_genes[:3] = mutated_genes
     new_value = calculate_value(new_genes)    
     new_fitness_value = calculate_fitness_value(new_value)
-
     new_chromosome = form_chromosome(new_genes, new_value, new_fitness_value)
 
     return new_chromosome
 
-
+# exchange the first and last 3 genes
 def cross_over(chrom_01, chrom_02):
-    
     genes_01 = chrom_01["genes"].copy()
     genes_02 = chrom_02["genes"].copy()
 
@@ -63,7 +60,7 @@ target_value = 100
 population_size = 30
 population = []
 
-# populasyonu olustur
+# population generated
 for i in range(0, population_size):
   genes = random.sample(range(1, 100), 5)
   value = calculate_value(genes)
@@ -80,7 +77,7 @@ max_fitness_list = []
 
 for i in range(0, number_of_iterations):
     
-    # rastgele caprazlama ve mutasyon indisleri olusturuldu
+    # randdom cross-over and mutation indexes created
     cross_over_indexes = random.sample(range(0, population_size), 2)
     mutation_index = random.sample(range(0, population_size), 1)[0]
     
@@ -93,7 +90,7 @@ for i in range(0, number_of_iterations):
     
     population = sorted(population, key=lambda k: k['fitness_value'], reverse=False)         
     
-    # en zayif 3 tanesi elendi
+    # the weakest 3 chromosomes eliminated
     population = population[:population_size]
 
     min_fitness_value = population[0]["fitness_value"] 
